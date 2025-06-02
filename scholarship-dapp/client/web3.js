@@ -1,4 +1,4 @@
-const contractAddress = "0xd6d38ab0bBD157FA02dC77581074eA9C388e1EF9";
+const contractAddress = "0x606fe01D374FB0f95319a3eFC26Df7f0d213cD9b";
 
 const contractABI = [
   {
@@ -161,6 +161,7 @@ async function connectWallet() {
       accounts = await ethereum.request({ method: 'eth_requestAccounts' });
       document.getElementById('account').innerText = `Connected: ${accounts[0]}`;
       contract = new web3.eth.Contract(contractABI, contractAddress);
+      await getTotalDonations();
     } catch (err) {
       console.error("Access denied", err);
     }
@@ -180,6 +181,7 @@ async function donate() {
       value: weiValue
     });
     alert("Donation successful!");
+    await getTotalDonations();
   } catch (err) {
     alert("Donation failed: " + err.message);
   }
@@ -196,12 +198,27 @@ async function applyForScholarship() {
 
 async function releaseFunds() {
   const recipient = document.getElementById('recipientAddress').value;
-  const amount = web3.utils.toWei('1', 'ether'); // You can make this dynamic
-
+  const amount = document.getElementById('releaseAmount').value;
+  
+  if (!recipient) return alert("Please enter recipient address");
+  if (!amount) return alert("Please enter amount to release");
+  
+  const weiValue = web3.utils.toWei(amount, 'ether');
+  
   try {
-    await contract.methods.releaseFunds(recipient, amount).send({ from: accounts[0] });
+    await contract.methods.releaseFunds(recipient, weiValue).send({ from: accounts[0] });
     alert("Funds released!");
   } catch (err) {
     alert("Release failed: " + err.message);
+  }
+}
+
+async function getTotalDonations() {
+  try {
+    const total = await contract.methods.totalDonations().call();
+    const totalInEth = web3.utils.fromWei(total, 'ether');
+    document.getElementById('totalDonations').innerText = `Total Donations: ${totalInEth} ETH`;
+  } catch (err) {
+    console.error("Failed to get total donations:", err);
   }
 }
