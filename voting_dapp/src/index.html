@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>A Simple Voting DApp</title>
+  <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+  <style>
+    :root {
+      --primary-color: #1a73e8;
+      --secondary-color: #f5f7fa;
+      --accent-color: #34c759;
+      --text-color: #202124;
+      --border-color: #e0e0e0;
+      --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      --transition: all 0.3s ease;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, var(--secondary-color), #d2e3fc);
+      min-height: 100vh;
+      color: var(--text-color);
+    }
+
+    .app-container {
+      display: grid;
+      grid-template-columns: 250px 1fr;
+      grid-template-rows: auto 1fr;
+      min-height: 100vh;
+    }
+
+    header {
+      grid-column: 1 / -1;
+      background: white;
+      box-shadow: var(--shadow);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 1000;
+    }
+
+    .logo {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--primary-color);
+    }
+
+    .sidebar {
+      background: #fff;
+      border-right: 1px solid var(--border-color);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .sidebar a {
+      color: var(--text-color);
+      text-decoration: none;
+      padding: 12px;
+      border-radius: 8px;
+      transition: var(--transition);
+    }
+
+    .sidebar a:hover {
+      background: var(--secondary-color);
+      color: var(--primary-color);
+    }
+
+    .main-content {
+      padding: 32px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    .voting-card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      padding: 24px;
+      max-width: 600px;
+      width: 100%;
+      animation: fadeIn 0.5s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 500;
+      color: var(--text-color);
+      margin-bottom: 24px;
+      text-align: center;
+    }
+
+    #account {
+      background: var(--secondary-color);
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      color: var(--text-color);
+      margin-bottom: 24px;
+      word-break: break-all;
+      text-align: center;
+    }
+
+    #candidates {
+      list-style: none;
+      display: grid;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    #candidates li {
+      background: var(--primary-color);
+      color: white;
+      padding: 16px;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: var(--transition);
+      cursor: pointer;
+    }
+
+    #candidates li:hover {
+      transform: translateX(5px);
+      background: #1557b0;
+    }
+
+    .candidate-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .candidate-name {
+      font-weight: 500;
+      font-size: 16px;
+    }
+
+    .candidate-votes {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    .connect-button {
+      background: var(--accent-color);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      width: 100%;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .connect-button::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transition: width 0.5s ease, height 0.5s ease;
+    }
+
+    .connect-button:hover::after {
+      width: 200%;
+      height: 200%;
+    }
+
+    .connect-button:hover {
+      background: #2ea44f;
+      transform: translateY(-2px);
+    }
+
+    .connect-button:active {
+      transform: translateY(0);
+    }
+
+    .status-indicator {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-left: 8px;
+      background: #ccc;
+    }
+
+    .status-indicator.connected {
+      background: var(--accent-color);
+    }
+
+    @media (max-width: 768px) {
+      .app-container {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        display: none;
+      }
+
+      .main-content {
+        padding: 16px;
+      }
+
+      .voting-card {
+        padding: 16px;
+      }
+
+      h1 {
+        font-size: 24px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      header {
+        padding: 12px 16px;
+      }
+
+      .logo {
+        font-size: 20px;
+      }
+
+      .connect-button {
+        padding: 10px;
+        font-size: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <header>
+      <div class="logo">Voting DApp</div>
+      <div id="account">Not connected <span class="status-indicator"></span></div>
+    </header>
+    <aside class="sidebar">
+      <a href="#">Dashboard</a>
+      <a href="#">Candidates</a>
+      <a href="#">Results</a>
+      <a href="#">Settings</a>
+    </aside>
+    <main class="main-content">
+      <div class="voting-card">
+        <h1>A Simple Voting DApp</h1>
+        <ul id="candidates">
+          <!-- Candidate items will be populated here -->
+        </ul>
+        <button class="connect-button" onclick="connectMetaMask()">Connect MetaMask</button>
+      </div>
+    </main>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
