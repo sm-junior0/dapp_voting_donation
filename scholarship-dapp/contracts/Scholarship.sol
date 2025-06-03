@@ -10,9 +10,11 @@ contract Scholarship {
     event Applied(address indexed applicant);
     event FundsReleased(address indexed recipient, uint256 amount);
 
+
     constructor() {
         admin = msg.sender;
     }
+
 
     function donate() public payable {
         require(msg.value > 0, "Donation must be greater than 0");
